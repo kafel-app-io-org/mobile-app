@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "94631088411",
+    "project_id": "kafel-app-io-35b84",
+    "storage_bucket": "kafel-app-io-35b84.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:94631088411:android:5471ff5067b713e2f703be",
+        "android_client_info": {
+          "package_name": "com.kafel.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDP4RBe_nOQyCsqXjSYCMlOnR0xBJGWsDY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

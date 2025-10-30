@@ -1,0 +1,17 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+, "app/(auth)/LoginScreen.jsx", "app/(auth)/index.jsx", "app/(tabs)/index.jsx", "app/index.jsx", "app/(tabs)/_layout.jsx", "walletkit/client.js", "walletkit/useWalletKit.js", "walletkit/namespaces.js", "assets/icons/HomeTabIcon.jsx"  ]
+}

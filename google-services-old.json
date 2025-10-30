@@ -1,0 +1,70 @@
+{
+  "project_info": {
+    "project_number": "1097669804574",
+    "project_id": "kafel-dev-1",
+    "storage_bucket": "kafel-dev-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097669804574:android:c2041542f4f53ca0b5240f",
+        "android_client_info": {
+          "package_name": "com.mohammedhasan.kafelapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1097669804574-9kbvvkq5m34r6nbfm8568e01kf2hslmb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mohammedhasan.kafelapp",
+            "certificate_hash": "690aa24f6f45a32c152a9aeab142b28007620cfa"
+          }
+        },
+        {
+          "client_id": "1097669804574-fs274nscpe6htegb93lv5iserv8hrpu2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mohammedhasan.kafelapp",
+            "certificate_hash": "71e346294b94a4e4b4751749a06f8435b4899a88"
+          }
+        },
+        {
+          "client_id": "1097669804574-v80nl647ubhgbra9hvcrpuaekqp7rpd6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mohammedhasan.kafelapp",
+            "certificate_hash": "4d93a342ef2f742b1cd51660f9383a59d318d8c2"
+          }
+        },
+        {
+          "client_id": "1097669804574-kekv63vruftgjk4a949e1bp5qbv2toos.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASAzxNJT0sZtsfulVXvkVRUespfHDFJq0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1097669804574-kekv63vruftgjk4a949e1bp5qbv2toos.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1097669804574-kfkeid0b3ikqahij7ohivefrg5lvrgl4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mohammedhasan.kafelapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
