@@ -116,7 +116,7 @@
       "logout": "تسجيل الخروج",
       "anonymous": "مجهول",
       "app": "تطبيق كافل",
-      "version": "الإصدار 1.6.13",
+      "version": "الإصدار 1.6.14",
       "DonationBenDistributionScreen": {
         "noDistribution": "لا يوجد سجلات توزيع تبرعات لعرضها"
       },
@@ -209,7 +209,8 @@
         "failed": "فشل",
         "saved":"تم حفظ الوصل في الاستوديو.",
         "error":"فشل التقاط أو حفظ الوصل",
-        "campaign":"الحملة"
+        "campaign":"الحملة",
+        "comments": "ملاحظات"
       },
       "DepositScreen": {
         "okWithSeconds": "حسناً ({{seconds}})",

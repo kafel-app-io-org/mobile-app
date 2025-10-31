@@ -1,7 +1,6 @@
 import {
   Image,
   StyleSheet,
-  Platform,
   View,
   Text,
   ScrollView,
@@ -9,24 +8,15 @@ import {
   ImageBackground,
   SafeAreaView,
   RefreshControl,
-  TouchableWithoutFeedback
 } from "react-native";
-import { useState, useCallback } from "react";
-import { useRouter } from "expo-router";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, Redirect } from "expo-router";
 import { Skeleton } from "moti/skeleton";
 import { MotiView } from "moti";
 import Svg, { Circle, Defs, Stop } from "react-native-svg";
 import { useLandingPageData, useUserProfile } from "@/query-hooks/general-query-hooks";
-import { HelloWave } from "@/components/HelloWave";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { Header } from "@/components/Header";
 import { CampaignCard, CampaignCardSkeleton } from "@/components/CampaignCard";
-import {
-  TransactionCard,
-  TransactionCardSkeleton,
-} from "@/components/TransactionCard";
+import { TransactionCard, TransactionCardSkeleton } from "@/components/TransactionCard";
 
 import { DepositIcon } from "@/assets/icons/DepositIcon";
 import { SendIcon } from "@/assets/icons/SendIcon";
@@ -37,89 +27,79 @@ import BalanceImage from "@/assets/images/balance-bg-green.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from "react-i18next";
 
-import { Redirect } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
 import { formatCurrency } from "@/utils/helper";
+
 export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { user, setUser } = useAuth();
-console.log('user&&&: ', user)
+  const { user } = useAuth();
+
   const { data, isPending, refetch } = useLandingPageData();
-  const { data: userProfile, isPending: isPendingUserProfile, refetch: refetchUserProfile } = useUserProfile();
+  const { data: userProfile } = useUserProfile();
+
   useEffect(() => {
-    console.log(userProfile);
+    console.log("userProfile:", userProfile);
   }, [userProfile]);
-  
 
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refetch();     
+      await refetch();
     } catch (error) {
-      console.error('Failed to refresh data:', error);
+      console.error("Failed to refresh data:", error);
     } finally {
       setRefreshing(false);
     }
+  }, [refetch]);
+
+  // avoid logging AsyncStorage on every render
+  useEffect(() => {
+    (async () => {
+      try {
+        const keys = await AsyncStorage.getAllKeys();
+        const items = await AsyncStorage.multiGet(keys);
+        console.log("AsyncStorage contents:", items);
+      } catch (e) {}
+    })();
   }, []);
 
-  const logAsyncStorage = async () => {
-    const keys = await AsyncStorage.getAllKeys();
-    const items = await AsyncStorage.multiGet(keys);
-    console.log('AsyncStorage contents:', items);
-  };
+  if (!user) return <Redirect href="/(auth)" />;
 
-  logAsyncStorage();
   const handleOnPressSeeAllCampaigns = () => {
     router.push("/(tabs)/campaigns/CampaignsScreen");
   };
+
+  // Open the full transactions list
   const handleOnPressSeeAllTransactions = () => {
     router.push("/(tabs)/transactions/AllTransactionsScreen");
   };
-  const handleOnPressSendTransactions = () => {
-    router.replace(`/(tabs)/transactions`);
-    setTimeout(() => {
-      router.push(`/(tabs)/transactions/SendTransactionScreen`);
-    }, 0);
-  };
-  const handleOnPressSendWithdraw = () => {
-    router.replace(`/(tabs)/transactions`);
-    setTimeout(() => {
-      router.push(`/(tabs)/transactions/WithdrawScreen`);
-    }, 0);
-  };
-  const handleOnPressSendDeposit = () => {
-    router.replace(`/(tabs)/transactions`);
-    setTimeout(() => {
-      router.push(`/(tabs)/transactions/DepositScreen`);
-    }, 0);
-  };
-  const handleOnPressReciveTransactions = () => {
-    router.replace(`/(tabs)/transactions`);
-    setTimeout(() => {
-      router.push(`/(tabs)/transactions/ReceiveTransactionScreen`);
-    }, 0);
+
+  // Open the list and auto-open details via params
+  const handleCardPress = (id) => {
+    if (!id) return;
+    router.push({
+      pathname: "/(tabs)/transactions/AllTransactionsScreen",
+      params: {
+        transaction_id_param: String(id),
+        // Ensure AllTransactionsScreen's effect re-triggers even if same tx
+        refreshKey: String(Date.now()),
+      },
+    });
   };
 
-  if (!user) {
-    return <Redirect href="/(auth)" />;
-  }
-  const colorMode = {
-    light: {
-      backgroundColor: "#E1E9EE",
-      foregroundColor: "#F2F8FC",
-    },
-  };
+  // Shortcuts on top card
+  const goSend = () => router.push("/(tabs)/transactions/SendTransactionScreen");
+  const goReceive = () => router.push("/(tabs)/transactions/ReceiveTransactionScreen");
+  const goDeposit = () => router.push("/(tabs)/transactions/DepositScreen");
+  const goWithdraw = () => router.push("/(tabs)/transactions/WithdrawScreen");
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
-        // style={{ paddingHorizontal: 16 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View style={styles.mainWrapper}>
           <ImageBackground
@@ -139,35 +119,36 @@ console.log('user&&&: ', user)
             ) : (
               <Text style={styles.balanceValue}>{`$${
                 data?.balance?.balance
-                  ? formatCurrency(data?.balance?.balance / 100)
+                  ? formatCurrency(data.balance.balance / 100)
                   : 0
               }`}</Text>
             )}
           </ImageBackground>
 
           <View style={styles.actionsWrapper}>
-            <TouchableOpacity onPress={handleOnPressSendTransactions}>
+            <TouchableOpacity onPress={goSend}>
               <SendIcon />
               <Text style={styles.actionLabel}>{t("tabs.home.send")}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleOnPressReciveTransactions}>
+            <TouchableOpacity onPress={goReceive}>
               <ReciveIcon />
               <Text style={styles.actionLabel}>{t("tabs.home.receive")}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleOnPressSendDeposit}>
+            <TouchableOpacity onPress={goDeposit}>
               <DepositIcon />
               <Text style={styles.actionLabel}>{t("tabs.home.deposite")}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleOnPressSendWithdraw}>
+            <TouchableOpacity onPress={goWithdraw}>
               <WithdrawIcon />
               <Text style={styles.actionLabel}>{t("tabs.home.withdraw")}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
+        {/* Latest Campaigns */}
         <View style={{ marginBottom: 10, paddingHorizontal: 16 }}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t("tabs.home.latestCampaigns")}</Text>
@@ -178,12 +159,12 @@ console.log('user&&&: ', user)
 
           <View style={{ display: "flex", gap: 12 }}>
             {Array.isArray(data?.latestCampaigns) &&
-              (data?.latestCampaigns?.length == 0 ? (
+              (data.latestCampaigns.length === 0 ? (
                 <Text style={{ textAlign: "center", marginVertical: 12 }}>
                   {t("tabs.home.noCampaigns")}
                 </Text>
               ) : (
-                data?.latestCampaigns?.map((item, index) => (
+                data.latestCampaigns.map((item, index) => (
                   <CampaignCard key={index} campaignData={item} />
                 ))
               ))}
@@ -196,7 +177,8 @@ console.log('user&&&: ', user)
           </View>
         </View>
 
-        <View style={{paddingHorizontal: 16}}>
+        {/* Recent Transactions */}
+        <View style={{ paddingHorizontal: 16 }}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t("tabs.home.recentTransactions")}</Text>
             <TouchableOpacity onPress={handleOnPressSeeAllTransactions}>
@@ -213,19 +195,21 @@ console.log('user&&&: ', user)
             )}
 
             {Array.isArray(data?.latestTransfers) &&
-              (data?.latestTransfers?.length == 0 ? (
+              (data.latestTransfers.length === 0 ? (
                 <Text style={{ textAlign: "center", marginVertical: 12 }}>
                   {t("tabs.home.noTransactions")}
                 </Text>
               ) : (
-                data?.latestTransfers?.map((item, index) => (
-                  <TransactionCard key={index} transactionData={item} />
+                data.latestTransfers.map((item, index) => (
+                  <TransactionCard
+                    key={String(item?.transaction?.id ?? index)}
+                    transactionData={item}
+                    handleOnPressTransation={handleCardPress}
+                  />
                 ))
               ))}
           </View>
         </View>
-
-        {/* <View style={{ height: 100 }}></View> */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -235,45 +219,32 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#ffffffff",
     minHeight: "100%",
-
-    // height: "100%",
   },
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-
   mainWrapper: {
     backgroundColor: "#F6F6F6",
     marginVertical: 12,
     borderRadius: 20,
-    marginHorizontal: 16
+    marginHorizontal: 16,
   },
   balanceWrapper: {
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderRadius: 20,
     flex: 1,
-    alignItems:"flex-start"
+    alignItems: "flex-start",
   },
   balanceLabel: {
     color: "#fff",
     fontSize: 12,
-    fontWeight: 400,
+    fontWeight: "400",
     marginBottom: 14,
   },
   balanceValue: {
     color: "#fff",
     fontSize: 37,
-    fontWeight: 800,
+    fontWeight: "800",
   },
   actionsWrapper: {
-    display: "flex",
     flexDirection: "row",
     justifyContent: "space-evenly",
     paddingVertical: 16,
@@ -281,34 +252,23 @@ const styles = StyleSheet.create({
   actionLabel: {
     color: "#3B363F",
     fontSize: 12,
-    fontWeight: 500,
+    fontWeight: "500",
     marginTop: 6,
-    alignSelf:"center",
+    alignSelf: "center",
   },
   sectionHeader: {
     marginVertical: 10,
-    display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
   },
   sectionTitle: {
     color: "#202226",
     fontSize: 18,
-    fontWeight: 700,
+    fontWeight: "700",
   },
   seeAllBtn: {
     color: "#838383",
     fontSize: 14,
-    fontWeight: 600,
-  },
-  transactionContainer: {
-    borderWidth: 1,
-    borderStyle: "solid",
-    borderColor: "#E5E5E5",
-    padding: 10,
-    borderRadius: 20,
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "center",
+    fontWeight: "600",
   },
 });

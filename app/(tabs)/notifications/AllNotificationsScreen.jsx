@@ -9,19 +9,11 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
   SafeAreaView,
   RefreshControl,
-  Dimensions,
-  TextInput,
-  Platform,
-  Modal,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import NotificationIcon from "@/assets/icons/NotificationIcon";
-import { convertToIntegerCents } from "@/utils/helper";
+import { useFocusEffect } from "@react-navigation/native";
 
 import { useAllNotifications } from "@/query-hooks/general-query-hooks";
 import {
@@ -36,9 +28,23 @@ const AllNotificationsScreen = () => {
     refetch,
   } = useAllNotifications();
 
+  // 1) Refetch on initial mount (guarded so it runs once)
+  const mounted = useRef(false);
   useEffect(() => {
-    console.log("notifications", notifications);
-  }, [notifications]);
+    if (!mounted.current) {
+      mounted.current = true;
+      refetch();
+    }
+  }, [refetch]);
+
+  // 2) Refetch every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      return () => {}; // cleanup not needed here
+    }, [refetch])
+  );
+
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -49,39 +55,28 @@ const AllNotificationsScreen = () => {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [refetch]);
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff", height: "100%" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <KeyboardAwareScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        style={{
-          flex: 1,
-          backgroundColor: "#fff",
-          // height: Dimensions.get("window").height,
-        }}
+        style={{ flex: 1, backgroundColor: "#fff" }}
+        contentContainerStyle={{ paddingBottom: 60 }}
       >
-        <View
-          style={{
-            flex: 1,
-            // paddingVertical: 20,
-            // gap: 18,
-            // height: Dimensions.get("window").height,
-            marginBottom: 60,
-          }}
-        >
+        <View style={{ flex: 1 }}>
           {notifications &&
           Array.isArray(notifications) &&
-          notifications?.length > 0 ? (
-            notifications?.map((n, index) => (
+          notifications.length > 0 ? (
+            notifications.map((n, index) => (
               <NotificationCard key={index} notification={n} />
             ))
           ) : !isPendingNotifications ? (
             <Text
               style={{
                 alignSelf: "center",
-                marginVertical: 40,
                 marginVertical: 40,
                 color: "#333",
               }}

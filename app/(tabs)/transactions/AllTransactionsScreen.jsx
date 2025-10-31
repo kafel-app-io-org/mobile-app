@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   key: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 400,
     color: "#939393",
   },
@@ -1006,6 +1006,7 @@ const TransactionSheet = React.forwardRef(
                     isPending={isPendingTransaction}
                     keyText={t("tabs.transactions.AllTransactionsScreen.from")}
                     valueText={`${transaction?.sourceName}`}
+                    valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                     icon={<TransactionFromIcon />}
                   />
 
@@ -1015,6 +1016,7 @@ const TransactionSheet = React.forwardRef(
                     isPending={isPendingTransaction}
                     keyText={t("tabs.transactions.AllTransactionsScreen.to")}
                     valueText={`${transaction?.targetName}`}
+                    valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                     icon={<TransactionToIcon />}
                   />
                   <Hr />
@@ -1070,6 +1072,7 @@ const TransactionSheet = React.forwardRef(
                 valueText={`${formatDate(transaction?.date)} ${formatTime(
                   transaction?.date
                 )}`}
+                valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                 icon={<TransactionDateIcon />}
               />
               <Hr />
@@ -1082,6 +1085,7 @@ const TransactionSheet = React.forwardRef(
                     transaction?.amount?.toString().replace(/^[-]/, "")
                   )
                 )}$`}
+                valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                 icon={<TransactionAmountIcon />}
               />
               <Hr />
@@ -1097,6 +1101,7 @@ const TransactionSheet = React.forwardRef(
                         transaction?.transaction?.entries[2]?.amount 
                       )
                     )}$`}
+                    valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                     icon={<TransactionAmountIcon />}
                   />
                   <Hr />
@@ -1111,16 +1116,30 @@ const TransactionSheet = React.forwardRef(
                   `tabs.transactions.AllTransactionsScreen.${transaction?.type}`
                 )}
                 // valueText={`${transaction?.type}`}
+                valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                 icon={<TransactionTypeIcon />}
               />
+              {(transaction?.comment) && (
+                <>   
+                <Hr />           
+              <DataRow
+                isPending={isPendingTransaction}
+                keyText={t("tabs.transactions.AllTransactionsScreen.comments")}
+                valueText={`${transaction?.comment}`}
+                valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
+                icon={<TransactionReferanceIcon />}
+              />
+              </>
+              )}
               <Hr />
               <DataRow
                 isPending={isPendingTransaction}
                 keyText={t("tabs.transactions.AllTransactionsScreen.referance")}
                 valueText={`${transaction?.reference}`}
+                valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                 icon={<TransactionReferanceIcon />}
               />
-              <Hr />
+              
 
               <TouchableOpacity onPress={handleOnPressDownloadRecipt}>
                 <LinearGradient
@@ -1165,6 +1184,7 @@ const TransactionSheet = React.forwardRef(
                   isPending={isPendingTransaction}
                   keyText={t("tabs.transactions.AllTransactionsScreen.from")}
                   valueText={`${transaction?.sourceName}`}
+                  valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                   icon={<TransactionFromIcon />}
                 />
                 <Hr />
@@ -1173,6 +1193,7 @@ const TransactionSheet = React.forwardRef(
                   isPending={isPendingTransaction}
                   keyText={t("tabs.transactions.AllTransactionsScreen.to")}
                   valueText={`${transaction?.targetName}`}
+                  valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                   icon={<TransactionToIcon />}
                 />
                 <Hr />
@@ -1186,6 +1207,7 @@ const TransactionSheet = React.forwardRef(
                     "tabs.transactions.AllTransactionsScreen.campaign"
                   )}
                   valueText={`${transaction?.campaign_name}`}
+                  valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                   icon={<TransactionTypeIcon />}
                 />
                 <Hr />
@@ -1197,6 +1219,7 @@ const TransactionSheet = React.forwardRef(
               valueText={`${formatDate(transaction?.date)} ${formatTime(
                 transaction?.date
               )}`}
+              valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
               icon={<TransactionDateIcon />}
             />
             <Hr />
@@ -1209,6 +1232,7 @@ const TransactionSheet = React.forwardRef(
                   transaction?.amount?.toString().replace(/^[-]/, "")
                 )
               )}$`}
+              valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
               icon={<TransactionAmountIcon />}
             />
             <Hr />
@@ -1225,6 +1249,7 @@ const TransactionSheet = React.forwardRef(
                       // (transaction?.amount/(1-FEE_PERCENTAGE) * FEE_PERCENTAGE)?.toString().replace(/^[-]/, "")
                     )
                   )}$`}
+                  valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
                   icon={<TransactionAmountIcon />}
                 />
                 <Hr />
@@ -1239,13 +1264,27 @@ const TransactionSheet = React.forwardRef(
               valueText={t(
                 `tabs.transactions.AllTransactionsScreen.${transaction?.type}`
               )}
+              valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
               icon={<TransactionTypeIcon />}
             />
+            {(transaction?.comment) && (
+                <>            
+            <Hr />
+            <DataRow
+              isPending={isPendingTransaction}
+              keyText={t("tabs.transactions.AllTransactionsScreen.comments")}
+              valueText={`${transaction?.transfer_comment}`}
+              valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
+              icon={<TransactionReferanceIcon />}
+            />
+            </>
+              )}
             <Hr />
             <DataRow
               isPending={isPendingTransaction}
               keyText={t("tabs.transactions.AllTransactionsScreen.referance")}
               valueText={`${transaction?.reference}`}
+              valueTextStyle={{ fontSize: 12 }}   // ⬅️ make it 12px
               icon={<TransactionReferanceIcon />}
             />
           </View>

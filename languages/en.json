@@ -116,7 +116,7 @@
       "logout": "Logout",
       "anonymous": "Anonymous",
       "app": "Kafel App",
-      "version": "App Version 1.6.13",
+      "version": "App Version 1.6.14",
       "DonationBenDistributionScreen": {
         "noDistribution": "No Distribution Records to Show"
       },
@@ -209,7 +209,9 @@
         "failed": "Failed",
         "saved": "Receipt saved to gallery.",
         "error": "Error capturing or saving receipt",
-        "campaign": "Campaign"
+        "campaign": "Campaign",
+        "comments": "Comments"
+
       },
       "DepositScreen": {
         "okWithSeconds": "OK ({{seconds}})",

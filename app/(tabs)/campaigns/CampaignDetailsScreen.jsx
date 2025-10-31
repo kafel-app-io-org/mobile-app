@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,12 +9,15 @@ import {
   RefreshControl,
   Share,
   Platform,
+  Dimensions,
+  Linking,
 } from "react-native";
-import { API_BASE_URL,
-		 PLAY_STORE_BASE_URL,
-		 APP_STORE_BASE_URL,
-		 APP_BASE_SCHEME
-		} from "../../../api/send-api-request";
+import {
+  API_BASE_URL,
+  PLAY_STORE_BASE_URL,
+  APP_STORE_BASE_URL,
+  APP_BASE_SCHEME,
+} from "../../../api/send-api-request";
 import * as Progress from "react-native-progress";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Skeleton } from "moti/skeleton";
@@ -22,6 +25,7 @@ import { useTranslation } from "react-i18next";
 import { FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { WebView } from "react-native-webview";
+import RenderHTML from "react-native-render-html";
 
 import CampaignDataIcon from "@/assets/icons/CampaignDataIcon";
 import CampaignLocationIcon from "@/assets/icons/CampaignLocationIcon";
@@ -40,7 +44,7 @@ const colorMode = {
   light: { backgroundColor: "#E1E9EE", foregroundColor: "#F2F8FC" },
 };
 
-// YouTube embed helper (JS only — no TS annotations)
+// YouTube embed helper
 const getHtml = (id) => `
 <!doctype html><html><head>
 <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -53,14 +57,12 @@ referrerpolicy="strict-origin-when-cross-origin"></iframe>
 </body></html>
 `;
 
-// 🔗 Deep link bases
 const APP_SCHEME = `${APP_BASE_SCHEME}`;
 const WEB_BASE = `${API_BASE_URL}`;
-
-// (Optional) Store links to include in the share text
 const PLAY_STORE_URL = `${PLAY_STORE_BASE_URL}`;
-  
 const APP_STORE_URL = `${APP_STORE_BASE_URL}`;
+
+const contentWidth = Dimensions.get("window").width - 32; // paddingHorizontal: 16 on each side
 
 const CampaignDetailsScreen = () => {
   const { t } = useTranslation();
@@ -93,32 +95,20 @@ const CampaignDetailsScreen = () => {
     });
   };
 
-  // ▶️ Floating Share Button handler
   const onShareCampaign = async () => {
     try {
       const title = campaign?.title || t("Campaign");
-      const schemeUrl = `${APP_SCHEME}://campaign/link/${id}`;
       const universalUrl = `${WEB_BASE}/campaign/link/${id}`;
-
-      // const storeLine =
-      //   Platform.OS === "ios"
-      //     ? `\n\nGet Kafel App: ${APP_STORE_URL}`
-      //     : `\n\nGet Kafel App: ${PLAY_STORE_URL}`;
-
-      // const storeLine = `\n\nGet Kafel App\nApple App Store: ${APP_STORE_URL}\nGoogle Play Store: ${PLAY_STORE_URL}`;
       const storeLine = `\n\nGet Kafel App\nGoogle Play Store: ${PLAY_STORE_URL}`;
-
       const message =
-        `${title}\n\n` +
-        //`Open in app:\n${schemeUrl}\n\n` +
-        `You’re invited to donate via Kafel App. Please click the link below to contribute.\n${universalUrl}` +
+        `${title}\n\nYou’re invited to donate via Kafel App. Please click the link below to contribute.\n${universalUrl}` +
         storeLine;
 
       await Share.share(
         {
           title,
-          message, // Android main body
-          url: universalUrl, // iOS link preview
+          message,
+          url: universalUrl,
         },
         {
           dialogTitle: t("Share Campaign"),
@@ -135,6 +125,42 @@ const CampaignDetailsScreen = () => {
     const { street, city, country } = address;
     return [street, city, country].filter(Boolean).join(", ");
   };
+
+  // ------- HTML render configuration -------
+  const campaignDetailsHtml = useMemo(
+    () =>
+      // Prefer server-provided HTML field; fallback to plain text
+      campaign?.details_html ?? campaign?.details ?? "",
+    [campaign]
+  );
+
+  const organizerOverviewHtml = useMemo(
+    () =>
+      campaign?.organizer?.overview_html ?? campaign?.organizer?.overview ?? "",
+    [campaign]
+  );
+
+  const htmlTagStyles = useMemo(
+    () => ({
+      p: { fontSize: 14, lineHeight: 20, color: "#202226" },
+      h1: { fontSize: 22, fontWeight: "700", marginTop: 10, marginBottom: 6 },
+      h2: { fontSize: 18, fontWeight: "700", marginTop: 10, marginBottom: 6 },
+      h3: { fontSize: 16, fontWeight: "700", marginTop: 10, marginBottom: 6 },
+      ul: { paddingLeft: 18 },
+      ol: { paddingLeft: 18 },
+      li: { marginBottom: 6 },
+      a: { color: "#2e7dd7", textDecorationLine: "underline" },
+      table: { borderWidth: 1, borderColor: "#ddd" },
+      th: { fontWeight: "700", padding: 6, borderWidth: 1, borderColor: "#ddd" },
+      td: { padding: 6, borderWidth: 1, borderColor: "#ddd" },
+      img: { maxWidth: "100%", height: "auto" },
+    }),
+    []
+  );
+
+  const onLinkPress = useCallback((evt, href) => {
+    if (href) Linking.openURL(href).catch(() => {});
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -193,7 +219,8 @@ const CampaignDetailsScreen = () => {
           ) : (
             <>
               <Text style={styles.title}>{campaign?.title}</Text>
-              <Text style={styles.desc}>{campaign?.description}</Text>
+              {/* plain short description under the title */}
+              {!!campaign?.description && <Text style={styles.desc}>{campaign?.description}</Text>}
             </>
           )}
 
@@ -224,7 +251,16 @@ const CampaignDetailsScreen = () => {
 
           {activeTab === "campaign" ? (
             <>
-              <Text>{`${campaign?.details ?? ""}`}</Text>
+              {/* ---------- HTML: Campaign Details ---------- */}
+              {!!campaignDetailsHtml && (
+                <RenderHTML
+                  contentWidth={contentWidth}
+                  source={{ html: String(campaignDetailsHtml) }}
+                  tagsStyles={htmlTagStyles}
+                  onLinkPress={onLinkPress}
+                />
+              )}
+
               <Hr />
               <DataRow
                 isPending={isPendingCampaign}
@@ -274,18 +310,22 @@ const CampaignDetailsScreen = () => {
                 icon={<CampaginNumBen />}
               />
               <Hr />
-              <WebView
-                originWhitelist={["*"]}
-                source={{
-                  html: getHtml(`${campaign?.video_url}`),
-                  baseUrl: WEB_BASE, // use ngrok as base
-                }}
-                style={{ width: "100%", height: 220 }}
-                javaScriptEnabled
-                domStorageEnabled
-                mediaPlaybackRequiresUserAction={false}
-                scrollEnabled={false}
-              />
+
+              {/* YouTube video */}
+              {!!campaign?.video_url && (
+                <WebView
+                  originWhitelist={["*"]}
+                  source={{
+                    html: getHtml(`${campaign?.video_url}`),
+                    baseUrl: WEB_BASE,
+                  }}
+                  style={{ width: "100%", height: 220 }}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  mediaPlaybackRequiresUserAction={false}
+                  scrollEnabled={false}
+                />
+              )}
             </>
           ) : (
             <View style={styles.organizerTab}>
@@ -302,7 +342,17 @@ const CampaignDetailsScreen = () => {
                 </View>
               </View>
               <Hr />
-              <Text>{campaign?.organizer?.overview}</Text>
+
+              {/* ---------- HTML: Organizer Overview ---------- */}
+              {!!organizerOverviewHtml && (
+                <RenderHTML
+                  contentWidth={contentWidth}
+                  source={{ html: String(organizerOverviewHtml) }}
+                  tagsStyles={htmlTagStyles}
+                  onLinkPress={onLinkPress}
+                />
+              )}
+
               <Hr />
               <View style={styles.organizerDetailsWrapper}>
                 <View style={styles.organizerDateRow}>
@@ -315,7 +365,6 @@ const CampaignDetailsScreen = () => {
                     })}
                   </Text>
                 </View>
-                {/* ⬇⬇ FIX WAS HERE: close the View properly (</View>) */}
                 <View style={styles.organizerDateRow}>
                   <CamOrgPhone />
                   <Text>{campaign?.organizer?.phone_number}</Text>
@@ -330,18 +379,21 @@ const CampaignDetailsScreen = () => {
                 </View>
               </View>
               <Hr />
-              <WebView
-                originWhitelist={["*"]}
-                source={{
-                  html: getHtml(`${campaign?.organizer?.video_url}`),
-                  baseUrl: WEB_BASE, // use ngrok as base
-                }}
-                style={{ width: "100%", height: 220 }}
-                javaScriptEnabled
-                domStorageEnabled
-                mediaPlaybackRequiresUserAction={false}
-                scrollEnabled={false}
-              />
+
+              {!!campaign?.organizer?.video_url && (
+                <WebView
+                  originWhitelist={["*"]}
+                  source={{
+                    html: getHtml(`${campaign?.organizer?.video_url}`),
+                    baseUrl: WEB_BASE,
+                  }}
+                  style={{ width: "100%", height: 220 }}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  mediaPlaybackRequiresUserAction={false}
+                  scrollEnabled={false}
+                />
+              )}
             </View>
           )}
 
@@ -361,7 +413,7 @@ const CampaignDetailsScreen = () => {
         </View>
       </ScrollView>
 
-      {/* 🔘 Floating Circular Share Button (Font Awesome) */}
+      {/* Floating Share Button */}
       <TouchableOpacity
         onPress={onShareCampaign}
         activeOpacity={0.8}
@@ -426,8 +478,6 @@ const styles = StyleSheet.create({
   organizerDetailsWrapper: { gap: 12 },
   organizerDateRow: { gap: 12, flexDirection: "row" },
   organizerTab: { padding: 16, backgroundColor: "#F9FFF2", borderRadius: 20 },
-
-  // Floating Action Button styles (bigger, circular, translucent, shadow)
   fabWrapper: {
     position: "absolute",
     right: 24,

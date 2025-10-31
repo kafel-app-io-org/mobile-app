@@ -1,119 +1,125 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import {
-  Image,
-  StyleSheet,
-  Platform,
   View,
   Text,
-  ScrollView,
+  StyleSheet,
   TouchableOpacity,
-  ImageBackground,
 } from "react-native";
-import * as Progress from "react-native-progress";
+import { Skeleton } from "moti/skeleton";
+import { MotiView } from "moti";
+import { useTranslation } from "react-i18next";
+
 import { DownArrowIcon } from "@/assets/icons/DownArrowIcon";
 import { UpArrowIcon } from "@/assets/icons/UpArrowIcon";
 import { MinusIcon } from "@/assets/icons/MinusIcon";
 import { PlusIcon } from "@/assets/icons/PlusIcon";
-import { DonationIcon } from "@/assets/icons/DonationIcon"
-import { Skeleton } from "moti/skeleton";
-import { useRouter } from "expo-router";
+import { DonationIcon } from "@/assets/icons/DonationIcon";
+
 import {
   formatDate,
   formatTime,
   convertToFloatCents,
   formatCurrency,
 } from "@/utils/helper";
-import { useTranslation } from "react-i18next";
 
-import { MotiView } from "moti";
-export const TransactionCard = ({
+/**
+ * Props:
+ * - transactionData: object
+ *   Expected shape (examples):
+ *   {
+ *     id?: string|number,
+ *     transaction?: { id?: string|number },
+ *     amount: number,                  // cents or minor units (as per your helpers)
+ *     date: string|number|Date,
+ *     status: 'Pending'|'Succeeded'|... (for i18n key)
+ *     category: 'deposit'|'withdraw'|'transfer'|'donation'
+ *     type: 'Sent'|'Received'|'Deposit'|'Withdraw'|'Donation'
+ *     sourceName?: string
+ *     targetName?: string
+ *     description?: string
+ *   }
+ *
+ * - handleOnPressTransation: (id: string|number) => void
+ */
+export const TransactionCard = memo(function TransactionCard({
   transactionData,
   handleOnPressTransation = () => {},
-}) => {
+}) {
   const { t } = useTranslation();
-  const router = useRouter();
-  // console.log("transactionData: ", transactionData);
 
-  // const handleOnPressTransation = () => {
-  //   router.replace(`/(tabs)/transactions`);
-  //   setTimeout(() => {
-  //     router.push({
-  //       pathname: `/(tabs)/transactions/TransactionDetailsScreen`,
-  //       params: transactionData,
-  //     });
-  //   }, 0);
-  // };
-  const renderTransactionIcon = (type) => {
-    switch (type) {
-      case "Withdraw":
-        return <MinusIcon />;
-      case "Deposit":
-        return <PlusIcon />;
-      case "Received":
-        return <DownArrowIcon />;
-      case "Sent":
-        return <UpArrowIcon />;   
-      case "Donation":
-        return <DonationIcon />; 
-
-      default:
-        return null;
-    }
+  // ---- Helpers -------------------------------------------------------------
+  const getIcon = (type = "") => {
+    const norm = String(type).toLowerCase();
+    if (norm === "withdraw") return <MinusIcon />;
+    if (norm === "deposit") return <PlusIcon />;
+    if (norm === "received") return <DownArrowIcon />;
+    if (norm === "sent") return <UpArrowIcon />;
+    if (norm === "donation") return <DonationIcon />;
+    return null;
   };
 
-  
+  const getTitle = (tx) => {
+    // Mirrors your original logic, with small guards
+    if (!tx) return "";
+    const { category, type, targetName, sourceName, description } = tx;
+
+    if (category === "deposit" || category === "donation") {
+      return t(`tabs.transactions.AllTransactionsScreen.${category}`);
+    }
+    if (type === "Sent") return targetName || "";
+    if (type === "Received") return sourceName || "";
+    if (category === "withdraw") {
+      // description is an i18n key in your code
+      return t(`tabs.transactions.AllTransactionsScreen.${description}`);
+    }
+    return "";
+  };
+
+  const id =
+    transactionData?.transaction?.id ??
+    transactionData?.id ??
+    null;
+
+  const onPress = useCallback(() => {
+    if (!id) return;
+    handleOnPressTransation(id);
+  }, [id, handleOnPressTransation]);
+
+  // ---- Render --------------------------------------------------------------
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={(e) => handleOnPressTransation(transactionData?.transaction?.id)}
-    >
-      <View style={styles.image}>
-        {renderTransactionIcon(transactionData?.type || "")}
-      </View>
+    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
+      <View style={styles.image}>{getIcon(transactionData?.type)}</View>
+
       <View style={{ flex: 1, gap: 5 }}>
-        <View
-          style={{
-            alignItems: "center",
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          {/* <Text style={styles.title}>{transactionData?.targetName ?transactionData?.targetName:transactionData?.description}</Text> */}
+        {/* Top row: title & amount */}
+        <View style={styles.rowBetween}>
+          <Text numberOfLines={1} style={styles.title}>
+            {getTitle(transactionData)}
+          </Text>
+
           <Text style={styles.title}>
-            {transactionData?.category === "deposit" || transactionData?.category === "donation" 
-              ? t(`tabs.transactions.AllTransactionsScreen.${transactionData?.category}`)
-              : transactionData?.type === "Sent"
-              ? transactionData?.targetName
-              : transactionData?.type === "Received"
-              ? transactionData?.sourceName
-              : transactionData?.category === "withdraw"
-              ?  t(`tabs.transactions.AllTransactionsScreen.${transactionData?.description}`)
+            {`${formatCurrency(
+              convertToFloatCents(Math.abs(transactionData?.amount ?? 0))
+            )}$`}
+          </Text>
+        </View>
+
+        {/* Bottom row: date/time & status */}
+        <View style={styles.rowBetween}>
+          <Text style={styles.date}>
+            {transactionData?.date
+              ? `${formatDate(transactionData.date)} ${formatTime(transactionData.date)}`
               : ""}
           </Text>
-          <Text style={styles.title}>{`${formatCurrency(
-            convertToFloatCents(Math.abs(transactionData?.amount))
-            // convertToFloatCents(transactionData?.amount)
-          )}$`}</Text>
-          {/* <Text style={styles.title}>{(transactionData?.amount > 0? "+": "-")+'$' + transactionData?.amount}</Text> */}
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Text style={styles.date}>
-            {/* valueText={`${formatDate(transaction?.date)} ${formatTime(transaction?.date)}`} */}
 
-            {`${formatDate(transactionData?.date)} ${formatTime(transactionData?.date)}` ?? ""}
+          <Text style={styles.date}>
+            {t(`tabs.transactions.AllTransactionsScreen.${transactionData?.status}`)}
           </Text>
-          <Text style={styles.date}>{ t(`tabs.transactions.AllTransactionsScreen.${transactionData?.status}`)}</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -126,41 +132,34 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: "center",
   },
-  redImage: {
-    backgroundColor: "#FCE8EA",
+  image: {
+    backgroundColor: "transparent",
     borderRadius: 100,
     width: 48,
     height: 48,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  greenImage: {
-    backgroundColor: "#E9FCE8",
-    borderRadius: 100,
-    width: 48,
-    height: 48,
+  rowBetween: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   title: {
     fontSize: 14,
-    fontWeight: 600,
+    fontWeight: "600",
     color: "#202226",
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
+    maxWidth: "70%",
   },
   date: {
     fontSize: 12,
-    fontWeight: 400,
+    fontWeight: "400",
     color: "#838383",
-  },
-  target: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: "#27364E",
-  },
-  percentage: {
-    fontSize: 12,
-    fontWeight: 500,
-    color: "#27364E",
   },
 });
 
+/* Skeleton version remains identical to your original visuals */
 export const TransactionCardSkeleton = () => {
   const colorMode = {
     light: {
@@ -183,21 +182,11 @@ export const TransactionCardSkeleton = () => {
     >
       <Skeleton colorMode={colorMode} width={48} height={48} radius={100} />
       <View style={{ flex: 1, gap: 5 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <Skeleton colorMode={colorMode} width={120} height={14} />
           <Skeleton colorMode={colorMode} width={60} height={14} />
         </View>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <Skeleton colorMode={colorMode} width={80} height={12} />
           <Skeleton colorMode={colorMode} width={70} height={12} />
         </View>
@@ -205,9 +194,3 @@ export const TransactionCardSkeleton = () => {
     </View>
   );
 };
-// const colorMode = {
-//   light: {
-//     backgroundColor: "#E1E9EE",
-//     foregroundColor: "#F2F8FC"
-//   }
-// };
