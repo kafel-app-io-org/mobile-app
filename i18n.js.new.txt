@@ -1,16 +1,15 @@
-// i18n.js
+// i18n.js (multi-language)
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import * as Localization from 'expo-localization';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { I18nManager, Platform } from 'react-native';
 import * as Updates from 'expo-updates';
-import sendApiRequest from './api/send-api-request';
 
-// Import your translation files
+// Translation files
 import en from './languages/en.json';
 import ar from './languages/ar.json';
-import tr from './languages/tr.json'; // ✅ ضع ملف tr.json داخل مجلد languages
+import tr from './languages/tr.json';
+import { i18nStorage } from "./utils/i18nStorage";
 
 const LANGUAGE_STORAGE_KEY = 'user-language';
 
@@ -18,21 +17,14 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English', isRTL: false },
   { code: 'ar', label: 'العربية', isRTL: true },
   { code: 'tr', label: 'Türkçe', isRTL: false },
-  // Add more like:
-  // { code: 'fr', label: 'Français', isRTL: false },
-  // { code: 'es', label: 'Español', isRTL: false },
-  // { code: 'pt', label: 'Português', isRTL: false },
 ];
 
 const supportedCodes = SUPPORTED_LANGUAGES.map((l) => l.code);
 
 export const getCurrentLanguage = () => i18n.language;
 
-// keep your existing exported variable
+// keep your existing exported variable (some screens may rely on it)
 export let selectedLanguage = '';
-
-const isRtlLanguage = (lng) =>
-  SUPPORTED_LANGUAGES.find((l) => l.code === lng)?.isRTL ?? false;
 
 const normalizeLanguage = (lng) => {
   if (!lng) return 'en';
@@ -47,16 +39,18 @@ const getDeviceLanguage = () => {
     locales?.[0]?.languageCode ||
     Localization.locale?.split(/[-_]/)[0] ||
     'en';
-
   return normalizeLanguage(code);
 };
+
+const isRtlLanguage = (lng) =>
+  SUPPORTED_LANGUAGES.find((l) => l.code === lng)?.isRTL ?? false;
 
 const languageDetector = {
   type: 'languageDetector',
   async: true,
   detect: async (callback) => {
     try {
-      const savedLang = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+      const savedLang = await i18nStorage.getItem(LANGUAGE_STORAGE_KEY);
       const lang = normalizeLanguage(savedLang || getDeviceLanguage() || 'en');
       selectedLanguage = lang;
       callback(lang);
@@ -69,46 +63,24 @@ const languageDetector = {
   init: () => {},
   cacheUserLanguage: async (lng) => {
     try {
-      await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, normalizeLanguage(lng));
+      await i18nStorage.setItem(LANGUAGE_STORAGE_KEY, normalizeLanguage(lng));
     } catch (err) {
       console.error('Failed to cache language:', err);
     }
   },
 };
 
-// Helper function to sync language with backend
-// Note: Backend only supports 'en' and 'ar', so we map 'tr' to 'en'
-const syncLanguageWithBackend = async (language) => {
-  try {
-    // Map Turkish to English for backend (backend only supports en/ar)
-    const backendLanguage = language === 'tr' ? 'en' : language;
-
-    await sendApiRequest('users/notification-settings', 'PATCH', undefined, {
-      preferred_language: backendLanguage,
-    });
-    console.log('Language synced with backend:', language, '(sent as:', backendLanguage + ')');
-  } catch (error) {
-    // Don't block language change if backend sync fails
-    console.error('Failed to sync language with backend:', error);
-  }
-};
-
-// ✅ Use this to set a specific language: await setLanguage('tr')
-export const setLanguage = async (lng, syncWithBackend = true) => {
+// Set language explicitly (and apply RTL/LTR if needed)
+export const setLanguage = async (lng) => {
   const nextLang = normalizeLanguage(lng);
 
   try {
-    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, nextLang);
+    await i18nStorage.setItem(LANGUAGE_STORAGE_KEY, nextLang);
     selectedLanguage = nextLang;
-
-    // Sync with backend if user is logged in
-    if (syncWithBackend) {
-      syncLanguageWithBackend(nextLang);
-    }
 
     const shouldBeRTL = isRtlLanguage(nextLang);
 
-    // If direction changes (LTR <-> RTL), RN needs a reload to apply layout direction.
+    // If direction changes, RN needs a reload to apply layout direction.
     if (Platform.OS !== 'web') {
       const rtlChanged = I18nManager.isRTL !== shouldBeRTL;
 
@@ -116,12 +88,13 @@ export const setLanguage = async (lng, syncWithBackend = true) => {
         I18nManager.allowRTL(true);
         I18nManager.forceRTL(shouldBeRTL);
 
+        // change language before reload so next boot shows correct strings
         await i18n.changeLanguage(nextLang);
 
         try {
           await Updates.reloadAsync();
         } catch (e) {
-          console.warn('RTL change requires an app restart to take effect.', e);
+          console.warn('RTL change may require an app restart.', e);
         }
         return;
       }
@@ -133,10 +106,10 @@ export const setLanguage = async (lng, syncWithBackend = true) => {
   }
 };
 
-// ✅ Simple cycling switch (en -> ar -> tr -> en ...)
+// Cycle language: en -> ar -> tr -> en ...
 export const switchLanguage = async () => {
   try {
-    const currentStored = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+    const currentStored = await i18nStorage.getItem(LANGUAGE_STORAGE_KEY);
     const current = normalizeLanguage(currentStored || i18n.language || 'en');
 
     const idx = supportedCodes.indexOf(current);
@@ -156,13 +129,11 @@ i18n
     supportedLngs: supportedCodes,
     nonExplicitSupportedLngs: true,
     load: 'languageOnly',
-
     resources: {
       en: { translation: en },
       ar: { translation: ar },
       tr: { translation: tr },
     },
-
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });

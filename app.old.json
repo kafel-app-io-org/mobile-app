@@ -15,7 +15,6 @@
     },
     "newArchEnabled": true,
     "ios": {
-      "buildNumber": "1.6.32",
       "supportsTablet": true,
       "bundleIdentifier": "com.kafel.app",
       "googleServicesFile": "./GoogleService-Info.plist",
@@ -26,18 +25,10 @@
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "Kafel accesses your photo library so you can choose a profile picture or organizer image. For example, you can select a photo from your gallery to set as your account profile image.",
-        "NSPhotoLibraryAddUsageDescription": "Kafel saves transaction receipts and QR codes to your photo library. For example, after completing a payment you can save the receipt image directly to your Photos app.",
-        "NSLocationWhenInUseUsageDescription": "We need your location to show nearby merchants on the map.",
-        "UIBackgroundModes": [
-          "remote-notification"
-        ],
+        "NSPhotoLibraryAddUsageDescription": "We need access to save receipts to your photo library.",
         "CFBundleURLTypes": [
-          {
-            "CFBundleURLSchemes": [
-              "kafelapp"
-            ]
-          }
+          { "CFBundleURLSchemes": ["<ENCODED_APP_ID_FROM_FIREBASE>"] },
+          { "CFBundleURLSchemes": ["<REVERSED_CLIENT_ID_FROM_GoogleService-Info.plist>"] }
         ]
       },
       "associatedDomains": [
@@ -56,15 +47,8 @@
       },
       "package": "com.kafel.app",
       "googleServicesFile": "./google-services.json",
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyDHhsCJC7UJdCEMHbxPP6lqZhCcsed_Hro"
-        }
-      },
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
+        "android.permission.CAMERA"
       ],
       "intentFilters": [
         {
@@ -105,8 +89,6 @@
     "plugins": [
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      "@react-native-firebase/messaging",
-      "expo-notifications",
       "expo-router",
       "expo-image-picker",
       "./plugins/withNonModularHeadersFix",
@@ -126,7 +108,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Kafel uses your camera to scan QR codes for payments and transfers. For example, you can point your camera at a recipient's QR code to quickly send funds to their account."
+          "cameraPermission": "Allow Kafel to access your camera"
         }
       ],
       [
@@ -143,8 +125,7 @@
         }
       ],
       "expo-localization",
-      "expo-secure-store",
-      "expo-location"
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

@@ -6,8 +6,8 @@ export const USDT_DESTS = [
     chainName: "Ethereum",
     tokenAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT mainnet
     decimals: 6,
-    merchant: "0xF99439cBFbe4A1E96823662805633351220E4099",  //Raed's wallet
-  },
+    merchant: "0xF99439cBFbe4A1E96823662805633351220E4099",   //Raed's wallet
+  }, 
   // 2) Polygon
   {
     chainId: 137,

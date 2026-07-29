@@ -1,6 +1,17 @@
 import { registerRootComponent } from 'expo';
+import messaging from '@react-native-firebase/messaging';
 
 import App from './App';
+
+// Register background message handler
+// CRITICAL: Must be registered BEFORE React renders
+messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  console.log('Background notification received:', remoteMessage);
+
+  // Lightweight background processing only
+  // Cannot access React components or navigation here
+  // System will display the notification automatically
+});
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
 // It also ensures that whether you load the app in Expo Go or in a native build,

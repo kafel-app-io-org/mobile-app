@@ -28,5 +28,12 @@
       },
       "environment": "development"
     }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6754792501"
+      }
+    }
   }
 }
